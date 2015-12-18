@@ -55,3 +55,636 @@ __history/
 
 # Castalia statistics file
 *.stat
+
+unit sfc1;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, ExtCtrls, StdCtrls, DB, ADODB, OleServer, ExcelXP;
+
+type
+  TForm1 = class(TForm)
+    Edit1: TEdit;
+    Edit2: TEdit;
+    Label2: TLabel;
+    Label3: TLabel;
+    Timer1: TTimer;
+    ADOConnection1: TADOConnection;
+    ADOQuery1: TADOQuery;
+    ADOQuery2: TADOQuery;
+    Memo1: TMemo;
+    Edit4: TEdit;
+    Label4: TLabel;
+    Edit6: TEdit;
+    Label6: TLabel;
+    Label7: TLabel;
+    Edit7: TEdit;
+    Edit8: TEdit;
+    Label8: TLabel;
+    ADOQuery3: TADOQuery;
+    Label9: TLabel;
+    Button2: TButton;
+    Edit9: TEdit;
+    Label10: TLabel;
+    ExcelApplication1: TExcelApplication;
+    Edit10: TEdit;
+    Label11: TLabel;
+    Label12: TLabel;
+    Edit11: TEdit;
+    Button5: TButton;
+    Button6: TButton;
+    Label5: TLabel;
+    procedure Timer1Timer(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure Edit1Change(Sender: TObject);
+    procedure BTCheckClick(Sender: TObject);
+    procedure Edit3KeyPress(Sender: TObject; var Key: Char);
+    procedure Edit1KeyPress(Sender: TObject; var Key: Char);
+    procedure Button1Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
+    procedure Button4Click(Sender: TObject);
+    procedure Button5Click(Sender: TObject);
+    procedure Button6Click(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm1.Timer1Timer(Sender: TObject);
+begin
+  Label3.caption:=datetimetostr(now);
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+{
+  ComboBox1.Items.Clear;
+  ComboBox2.Items.Clear;
+
+  ADOQuery1.ACTIVE:=TRUE;
+  ADOQuery1.FIRST;
+  WHILE NOT ADOQuery1.EOF DO
+    BEGIN
+      ComboBox1.Items.Add(ADOQuery1.Fields.Fields[1].VALUE);
+      ADOQuery1.NEXT;
+    END;
+
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select * from SFCSNTC');
+  ADOQuery1.ACTIVE:=TRUE;
+  ADOQuery1.FIRST;
+  WHILE NOT ADOQuery1.EOF DO
+    BEGIN
+      ComboBox2.Items.Add(ADOQuery1.Fields.Fields[1].VALUE);
+      ADOQuery1.NEXT;
+    END;
+
+
+  ComboBox1.ItemIndex:=0;
+  ComboBox2.ItemIndex:=0;
+
+  ADOQuery1.ACTIVE:=FALSE;
+}
+end;
+
+
+procedure TForm1.Edit1Change(Sender: TObject);
+begin
+  if length(edit1.text)>5 then
+    begin
+      edit2.text:='';
+      edit2.setfocus;
+    end;
+end;
+
+procedure TForm1.BTCheckClick(Sender: TObject);
+var
+  s:string;
+  i,j:integer;
+begin
+{
+  j := StrToInt(Edit11.text);
+  ADOQuery2.close;
+  ADOQuery2.SQL.Clear;
+  ADOQuery2.SQL.add('SELECT Mes.SerN,MesRes.RsMxp ');
+  ADOQuery2.SQL.add('FROM Mes,MesRes');
+  ADOQuery2.sql.add('WHERE Mes.SerN=:SN');
+  ADOQuery2.sql.add('and MesRes.Id=Mes.Id');
+  ADOQuery2.sql.add('and OK=1');
+  ADOQuery2.Parameters.ParamByName('SN').Value:= Edit2.Text;
+  ADOQuery2.OPEN;
+  Label9.font.color:=clBlack;
+  Label9.Caption:=ADOQuery2.Fields[1].asstring;
+  IF ADOQuery2.Fields[1].value<j THEN
+    BEGIN
+      Label9.font.color:=clRed;
+    END;
+
+  IF ADOQuery2.Recordset.RecordCount=0 THEN
+    BEGIN
+      Label9.Caption:='無資料';
+      Label9.font.color:=clRed;
+    END;
+  IF  (ADOQuery2.Fields[1].value>j) and (ADOQuery2.Recordset.RecordCount>0) then
+    begin
+      ADOQuery1.close;
+      ADOQuery1.SQL.Clear;
+      ADOQuery1.SQL.add('update SFCSNTD');
+      ADOQuery1.SQL.add('set OK=0');
+      ADOQuery1.sql.add('WHERE SN=:SN');
+      ADOQuery1.Parameters.ParamByName('SN').Value:= Edit2.Text;
+      ADOQuery1.ExecSQL;
+//  IF ADOQuery1.Recordset.RecordCount>0 THEN
+//    BEGIN
+//      MESSAGEBOX(FORM1.Handle,'序號重複輸入!!','WARNING',MB_ICONWARNING);
+//    END;
+//  IF ADOQuery1.Recordset.RecordCount=0 THEN
+//    BEGIN
+      ADOQuery1.close;
+      ADOQuery1.SQL.Clear;
+      ADOQuery1.SQL.add('insert into SFCSNTD ( SN, CN, CSN, SER,OK)');
+      ADOQuery1.sql.add('values ( :SN, :CN, :CSN, :SER, :OK) ');
+      ADOQuery1.Parameters.ParamByName('SN').Value:= Edit2.Text;
+      ADOQuery1.Parameters.ParamByName('CN').Value:= Edit5.Text;
+      ADOQuery1.Parameters.ParamByName('CSN').Value:= Edit7.Text;
+      ADOQuery1.Parameters.ParamByName('SER').Value:= Edit8.Text;
+      ADOQuery1.Parameters.ParamByName('OK').Value:=1;
+      ADOQuery1.ExecSQL;
+      s:= Label3.Caption + ' ' + Edit2.Text + ' ' + Edit5.Text + ' ' + Edit7.Text+ ' ' + Edit8.Text;
+      memo1.Lines.Add(s);
+      i:=StrToInt(Edit8.Text);
+      if i=36 then i:=0;
+      Edit8.Text:=IntToStr(i+1);
+    END;
+
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('SELECT * FROM SFCSNTE');
+  ADOQuery1.sql.add('WHERE CN=:CN');
+  ADOQuery1.Parameters.ParamByName('CN').Value:= Edit5.Text;
+  ADOQuery1.OPEN;
+
+  IF ADOQuery1.Recordset.RecordCount=0 THEN
+    BEGIN
+      ADOQuery1.close;
+      ADOQuery1.SQL.Clear;
+      ADOQuery1.SQL.add('insert into SFCSNTE ( CN, PN, MN, WN, DT)');
+      ADOQuery1.sql.add('values ( :CN, :PN, :MN, :WN, :DT) ');
+      ADOQuery1.Parameters.ParamByName('CN').Value:= Edit5.Text;
+      ADOQuery1.Parameters.ParamByName('PN').Value:= Edit4.Text;
+      ADOQuery1.Parameters.ParamByName('MN').Value:= Edit6.Text;
+      ADOQuery1.Parameters.ParamByName('WN').Value:= Edit3.Text;
+      ADOQuery1.Parameters.ParamByName('DT').Value:= STRTODATETIME(Label3.Caption);
+      ADOQuery1.ExecSQL;
+      s:= Label3.Caption + ' ' + Edit5.Text + ' ' + Edit4.Text + ' ' + Edit6.Text+' '+Edit3.Text;
+      memo1.Lines.Add(s);
+    END;
+{
+  IF ADOQuery1.Recordset.RecordCount>0 THEN
+    BEGIN
+      ADOQuery1.close;
+      ADOQuery1.SQL.Clear;
+      ADOQuery1.SQL.add('update SFCSNTE set ( CN, PN, MN, WN, DT)');
+      ADOQuery1.sql.add('values ( :CN, :PN, :MN, :WN, :DT) ');
+      ADOQuery1.Parameters.ParamByName('CN').Value:= Edit5.Text;
+      ADOQuery1.Parameters.ParamByName('PN').Value:= Edit4.Text;
+      ADOQuery1.Parameters.ParamByName('MN').Value:= Edit6.Text;
+      ADOQuery1.Parameters.ParamByName('WN').Value:= Edit3.Text;
+      ADOQuery1.Parameters.ParamByName('DT').Value:= STRTODATETIME(Label3.Caption);
+      ADOQuery1.ExecSQL;
+      s:= Label3.Caption + ' ' + Edit5.Text + ' ' + Edit4.Text + ' ' + Edit6.Text+' '+Edit3.Text;
+      memo1.Lines.Add(s);
+    END;
+}
+end;
+
+procedure TForm1.Edit3KeyPress(Sender: TObject; var Key: Char);
+begin
+{
+ if key=#13 then
+  begin
+    if length(Edit3.text)=6 then
+      begin
+        edit1.Text:=edit3.Text;
+        edit3.Text:='';
+        edit3.SetFocus;
+      end;
+    if length(Edit3.text)=15 then
+      begin
+        edit2.Text:=edit3.Text;
+        edit3.Text:='';
+        edit3.SetFocus;
+      end;
+  end ;
+}
+end;
+
+procedure TForm1.Edit1KeyPress(Sender: TObject; var Key: Char);
+begin
+ if key=#13 then
+  begin
+//    if length(Edit1.text)=6 then
+//      begin
+//        edit3.Text:=edit1.Text;           //工號
+//      end;
+//    if length(Edit1.text)=10 then
+//      begin
+//        edit6.Text:=edit1.Text;           //型號
+//      end;
+//    if length(Edit1.text)=12 then
+//      begin
+//        edit4.Text:=edit1.Text;          //PN
+//      end;
+    if length(Edit1.text)=10 then
+      begin
+//        edit5.Text:=edit1.Text;          //箱號
+        Edit8.Text:='1';
+      end;
+    if length(Edit1.text)=17 then
+      begin
+        edit7.Text:=edit1.Text;          //custom S/N
+      end;
+    if length(Edit1.text)=15 then
+      begin
+//        IF COPY(Edit1.text,0,1)='W' THEN
+//          BEGIN
+            edit2.Text:=edit1.Text;       //LPT S/N
+//            BTCheck.Click;
+//          END
+//        ELSE
+//          BEGIN
+//            edit4.Text:=edit1.Text;       //PN
+//          END;
+      end;
+//    if length(Edit1.text)=3 then
+//      begin
+//        if strtoint(edit1.text)<200 then
+//          begin
+//            ComboBox1.ItemIndex:=strtoint(edit1.text)-101;
+//          end;
+//        if (strtoint(edit1.text)>200) and (strtoint(edit1.text)<300) then
+//          begin
+//            ComboBox2.ItemIndex:=strtoint(edit1.text)-201;
+//          end;
+//      end;
+    edit1.Text:='';
+    edit1.SetFocus;
+  end ;
+end;
+
+procedure TForm1.Button1Click(Sender: TObject);
+var
+  s:string;
+begin
+{
+  Edit2.Text:='';
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('insert into SFCSNTA ( TBID, DT, SN, WN, TCID)');
+  ADOQuery1.sql.add('values ( :TBID, :DT, :SN, :WN, :TCID) ');
+  ADOQuery1.Parameters.ParamByName('TBID').Value:= ComboBox1.ItemIndex+101;
+  ADOQuery1.Parameters.ParamByName('DT').Value:= STRTODATETIME(Label3.Caption);
+  ADOQuery1.Parameters.ParamByName('SN').Value:= Edit2.Text;
+  ADOQuery1.Parameters.ParamByName('WN').Value:= Edit3.Text;
+  ADOQuery1.Parameters.ParamByName('TCID').Value:= ComboBox2.ItemIndex+201;
+  ADOQuery1.ExecSQL;
+  s:=ComboBox1.text + ' ' + Label3.Caption + ' ' + Edit2.Text + ' ' + Edit3.Text + ' ' + ComboBox2.text;
+  memo1.Lines.Add(s);
+}
+end;
+
+procedure TForm1.Button2Click(Sender: TObject);
+begin
+  MESSAGEBOX(FORM1.Handle,'箱號替換功能請小心使用!!','WARNING',MB_ICONWARNING);
+  ADOQuery2.close;
+  ADOQuery2.SQL.Clear;
+  ADOQuery2.SQL.add('update SFCSNTD');
+  ADOQuery2.SQL.add('set CN =:SN');
+  ADOQuery2.SQL.add('where CN =:SN1');
+  ADOQuery2.Parameters.ParamByName('SN').Value:= Edit9.Text;
+  ADOQuery2.Parameters.ParamByName('SN1').Value:= Edit10.Text;
+  ADOQuery2.ExecSQL;
+  MESSAGEBOX(FORM1.Handle,'箱號替換完畢!!','WARNING',MB_ICONWARNING);
+end;
+
+procedure TForm1.Button3Click(Sender: TObject);
+VAR
+  asheet:variant;
+  i:integer;
+begin
+
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select * from SFCSNTE');
+  ADOQuery1.SQL.add('where CN =:SN');
+  ADOQuery1.Parameters.ParamByName('SN').Value:= Edit9.Text;
+  ADOQuery1.OPEN;
+
+  ADOQuery2.close;
+  ADOQuery2.SQL.Clear;
+  ADOQuery2.SQL.add('select * from SFCSNTD');
+  ADOQuery2.SQL.add('where CN =:SN');
+  ADOQuery2.SQL.add('and OK =1');
+  ADOQuery2.SQL.add('order by SER');
+  ADOQuery2.Parameters.ParamByName('SN').Value:= Edit9.Text;
+  ADOQuery2.OPEN;
+  IF ADOQuery2.Recordset.RecordCount=0 THEN
+    BEGIN
+      MESSAGEBOX(FORM1.Handle,'無裝箱序號資料!!','WARNING',MB_ICONWARNING);
+    END;
+  IF ADOQuery2.Recordset.RecordCount>0 THEN
+    BEGIN
+      ExcelApplication1.Visible[0]:=true;
+      ExcelApplication1.Workbooks.Add(xlwbatworksheet,0);
+      asheet:= ExcelApplication1.Worksheets.Item[1];
+      asheet.cells[1,1].value:='箱號';
+      asheet.cells[1,2].value:='品號';
+      asheet.cells[1,3].value:='型號';
+      asheet.cells[1,4].value:='工號';
+      asheet.cells[1,5].value:='時間';
+      asheet.cells[1,6].value:='序號1';
+      asheet.cells[1,7].value:='序號2';
+      asheet.cells[1,8].value:='序號3';
+      asheet.cells[1,9].value:='序號4';
+      asheet.cells[1,10].value:='序號5';
+      asheet.cells[1,11].value:='序號6';
+      asheet.cells[1,12].value:='序號7';
+      asheet.cells[1,13].value:='序號8';
+      asheet.cells[1,14].value:='序號9';
+      asheet.cells[1,15].value:='序號10';
+      asheet.cells[1,16].value:='序號11';
+      asheet.cells[1,17].value:='序號12';
+      asheet.cells[1,18].value:='序號13';
+      asheet.cells[1,19].value:='序號14';
+      asheet.cells[1,20].value:='序號15';
+      asheet.cells[1,21].value:='序號16';
+      asheet.cells[1,22].value:='序號17';
+      asheet.cells[1,23].value:='序號18';
+      asheet.cells[1,24].value:='序號19';
+      asheet.cells[1,25].value:='序號20';
+      asheet.cells[1,26].value:='序號21';
+      asheet.cells[1,27].value:='序號22';
+      asheet.cells[1,28].value:='序號23';
+      asheet.cells[1,29].value:='序號24';
+      asheet.cells[1,30].value:='客戶序號1';
+      asheet.cells[1,31].value:='客戶序號2';
+      asheet.cells[1,32].value:='客戶序號3';
+      asheet.cells[1,33].value:='客戶序號4';
+      asheet.cells[1,34].value:='客戶序號5';
+      asheet.cells[1,35].value:='客戶序號6';
+      asheet.cells[1,36].value:='客戶序號7';
+      asheet.cells[1,37].value:='客戶序號8';
+      asheet.cells[1,38].value:='客戶序號9';
+      asheet.cells[1,39].value:='客戶序號10';
+      asheet.cells[1,40].value:='客戶序號11';
+      asheet.cells[1,41].value:='客戶序號12';
+      asheet.cells[1,42].value:='客戶序號13';
+      asheet.cells[1,43].value:='客戶序號14';
+      asheet.cells[1,44].value:='客戶序號15';
+      asheet.cells[1,45].value:='客戶序號16';
+      asheet.cells[1,46].value:='客戶序號17';
+      asheet.cells[1,47].value:='客戶序號18';
+      asheet.cells[1,48].value:='客戶序號19';
+      asheet.cells[1,49].value:='客戶序號20';
+      asheet.cells[1,50].value:='客戶序號21';
+      asheet.cells[1,51].value:='客戶序號22';
+      asheet.cells[1,52].value:='客戶序號23';
+      asheet.cells[1,53].value:='客戶序號24';
+      for I := 1 to 5 do
+        begin
+          asheet.cells[2,i].value:=ADOQuery1.Fields[i-1].Value;
+        end;
+      for I := 6 to 29 do
+        begin
+          asheet.cells[2,i].value:=ADOQuery2.Fields[0].Value;
+          asheet.cells[2,i+24].value:=ADOQuery2.Fields[2].Value;
+          ADOQuery2.next;
+        end;
+    end;
+
+end;
+
+procedure TForm1.Button4Click(Sender: TObject);
+VAR
+  asheet:variant;
+  i,j:integer;
+begin
+
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select * from SFCSNTE');
+  ADOQuery1.SQL.add('where CN >=:SN1');
+  ADOQuery1.SQL.add('and CN <=:SN2');
+  ADOQuery1.SQL.add('order by CN');
+  ADOQuery1.Parameters.ParamByName('SN1').Value:= Edit9.Text;
+  ADOQuery1.Parameters.ParamByName('SN2').Value:= Edit10.Text;
+  ADOQuery1.OPEN;
+
+  ExcelApplication1.Visible[0]:=true;
+  ExcelApplication1.Workbooks.Add(xlwbatworksheet,0);
+  asheet:= ExcelApplication1.Worksheets.Item[1];
+  asheet.cells[1,1].value:='箱號';
+  asheet.cells[1,2].value:='品號';
+  asheet.cells[1,3].value:='型號';
+  asheet.cells[1,4].value:='工號';
+  asheet.cells[1,5].value:='時間';
+  asheet.cells[1,6].value:='序號1';
+  asheet.cells[1,7].value:='序號2';
+  asheet.cells[1,8].value:='序號3';
+  asheet.cells[1,9].value:='序號4';
+  asheet.cells[1,10].value:='序號5';
+  asheet.cells[1,11].value:='序號6';
+  asheet.cells[1,12].value:='序號7';
+  asheet.cells[1,13].value:='序號8';
+  asheet.cells[1,14].value:='序號9';
+  asheet.cells[1,15].value:='序號10';
+  asheet.cells[1,16].value:='序號11';
+  asheet.cells[1,17].value:='序號12';
+  asheet.cells[1,18].value:='序號13';
+  asheet.cells[1,19].value:='序號14';
+  asheet.cells[1,20].value:='序號15';
+  asheet.cells[1,21].value:='序號16';
+  asheet.cells[1,22].value:='序號17';
+  asheet.cells[1,23].value:='序號18';
+  asheet.cells[1,24].value:='序號19';
+  asheet.cells[1,25].value:='序號20';
+  asheet.cells[1,26].value:='序號21';
+  asheet.cells[1,27].value:='序號22';
+  asheet.cells[1,28].value:='序號23';
+  asheet.cells[1,29].value:='序號24';
+  asheet.cells[1,30].value:='客戶序號1';
+  asheet.cells[1,31].value:='客戶序號2';
+  asheet.cells[1,32].value:='客戶序號3';
+  asheet.cells[1,33].value:='客戶序號4';
+  asheet.cells[1,34].value:='客戶序號5';
+  asheet.cells[1,35].value:='客戶序號6';
+  asheet.cells[1,36].value:='客戶序號7';
+  asheet.cells[1,37].value:='客戶序號8';
+  asheet.cells[1,38].value:='客戶序號9';
+  asheet.cells[1,39].value:='客戶序號10';
+  asheet.cells[1,40].value:='客戶序號11';
+  asheet.cells[1,41].value:='客戶序號12';
+  asheet.cells[1,42].value:='客戶序號13';
+  asheet.cells[1,43].value:='客戶序號14';
+  asheet.cells[1,44].value:='客戶序號15';
+  asheet.cells[1,45].value:='客戶序號16';
+  asheet.cells[1,46].value:='客戶序號17';
+  asheet.cells[1,47].value:='客戶序號18';
+  asheet.cells[1,48].value:='客戶序號19';
+  asheet.cells[1,49].value:='客戶序號20';
+  asheet.cells[1,50].value:='客戶序號21';
+  asheet.cells[1,51].value:='客戶序號22';
+  asheet.cells[1,52].value:='客戶序號23';
+  asheet.cells[1,53].value:='客戶序號24';
+  for J:=1 to ADOQuery1.recordcount do
+    begin
+      ADOQuery2.close;
+      ADOQuery2.SQL.Clear;
+      ADOQuery2.SQL.add('select * from SFCSNTD');
+      ADOQuery2.SQL.add('where CN =:SN');
+      ADOQuery2.SQL.add('and OK =1');
+      ADOQuery2.SQL.add('order by SER');
+      ADOQuery2.Parameters.ParamByName('SN').Value:= ADOQuery1.Fields[0].Value;
+      ADOQuery2.OPEN;
+
+      IF ADOQuery2.Recordset.RecordCount>0 THEN
+        BEGIN
+          for I := 1 to 5 do
+            begin
+              asheet.cells[J+1,i].value:=ADOQuery1.Fields[i-1].Value;
+            end;
+          for I := 6 to 29 do
+            begin
+              asheet.cells[j+1,i].value:=ADOQuery2.Fields[0].Value;
+              asheet.cells[j+1,i+24].value:=ADOQuery2.Fields[2].Value;
+              ADOQuery2.next;
+             end;
+        end;
+      ADOQuery1.next;
+    end;
+end;
+
+procedure TForm1.Button5Click(Sender: TObject);
+VAR
+  asheet:variant;
+  i:integer;
+begin
+
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select * from SFCSNTE');
+  ADOQuery1.SQL.add('where CN =:SN');
+  ADOQuery1.Parameters.ParamByName('SN').Value:= Edit9.Text;
+  ADOQuery1.OPEN;
+
+  ADOQuery2.close;
+  ADOQuery2.SQL.Clear;
+  ADOQuery2.SQL.add('select * from SFCSNTD');
+  ADOQuery2.SQL.add('where CN =:SN');
+  ADOQuery2.SQL.add('and OK =1');
+  ADOQuery2.SQL.add('order by SER');
+  ADOQuery2.Parameters.ParamByName('SN').Value:= Edit9.Text;
+  ADOQuery2.OPEN;
+  IF ADOQuery2.Recordset.RecordCount=0 THEN
+    BEGIN
+      MESSAGEBOX(FORM1.Handle,'無裝箱序號資料!!','WARNING',MB_ICONWARNING);
+    END;
+  IF ADOQuery2.Recordset.RecordCount>0 THEN
+    BEGIN
+      ExcelApplication1.Visible[0]:=true;
+      ExcelApplication1.Workbooks.Add(xlwbatworksheet,0);
+      asheet:= ExcelApplication1.Worksheets.Item[1];
+      asheet.cells[1,1].value:='箱號';
+      asheet.cells[1,2].value:='品號';
+      asheet.cells[1,3].value:='型號';
+      asheet.cells[1,4].value:='工號';
+      asheet.cells[1,5].value:='時間';
+      for I := 1 to 36 do
+        begin
+          asheet.cells[1,i+5].value:='序號'+intToStr(i);
+          asheet.cells[1,i+41].value:='客戶序號'+intToStr(i);
+        end;
+      for I := 1 to 5 do
+        begin
+          asheet.cells[2,i].value:=ADOQuery1.Fields[i-1].Value;
+        end;
+      for I := 6 to 41 do
+        begin
+          asheet.cells[2,i].value:=ADOQuery2.Fields[0].Value;
+          asheet.cells[2,i+36].value:=ADOQuery2.Fields[2].Value;
+          ADOQuery2.next;
+        end;
+    end;
+
+end;
+
+procedure TForm1.Button6Click(Sender: TObject);
+VAR
+  asheet:variant;
+  i,j:integer;
+begin
+
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select * from SFCSNTE');
+  ADOQuery1.SQL.add('where CN >=:SN1');
+  ADOQuery1.SQL.add('and CN <=:SN2');
+  ADOQuery1.SQL.add('order by CN');
+  ADOQuery1.Parameters.ParamByName('SN1').Value:= Edit9.Text;
+  ADOQuery1.Parameters.ParamByName('SN2').Value:= Edit10.Text;
+  ADOQuery1.OPEN;
+
+  ExcelApplication1.Visible[0]:=true;
+  ExcelApplication1.Workbooks.Add(xlwbatworksheet,0);
+  asheet:= ExcelApplication1.Worksheets.Item[1];
+  asheet.cells[1,1].value:='箱號';
+  asheet.cells[1,2].value:='品號';
+  asheet.cells[1,3].value:='型號';
+  asheet.cells[1,4].value:='工號';
+  asheet.cells[1,5].value:='時間';
+  for I := 1 to 36 do
+    begin
+      asheet.cells[1,i+5].value:='序號'+intToStr(i);
+      asheet.cells[1,i+41].value:='客戶序號'+intToStr(i);
+    end;
+  for J:=1 to ADOQuery1.recordcount do
+    begin
+      ADOQuery2.close;
+      ADOQuery2.SQL.Clear;
+      ADOQuery2.SQL.add('select * from SFCSNTD');
+      ADOQuery2.SQL.add('where CN =:SN');
+      ADOQuery2.SQL.add('and OK =1');
+      ADOQuery2.SQL.add('order by SER');
+      ADOQuery2.Parameters.ParamByName('SN').Value:= ADOQuery1.Fields[0].Value;
+      ADOQuery2.OPEN;
+
+      IF ADOQuery2.Recordset.RecordCount>0 THEN
+        BEGIN
+          for I := 1 to 5 do
+            begin
+              asheet.cells[J+1,i].value:=ADOQuery1.Fields[i-1].Value;
+            end;
+          for I := 6 to 41 do
+            begin
+              asheet.cells[j+1,i].value:=ADOQuery2.Fields[0].Value;
+              asheet.cells[j+1,i+36].value:=ADOQuery2.Fields[2].Value;
+              ADOQuery2.next;
+             end;
+        end;
+      ADOQuery1.next;
+    end;
+end;
+
+end.
